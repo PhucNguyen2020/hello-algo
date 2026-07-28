@@ -1,0 +1,58 @@
+name: Deploy docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install mkdocs
+        run: pip install mkdocs-material==9.5.5 mkdocs-glightbox
+
+      - name: Build zh (root)
+        run: |
+          mkdir -p build/overrides build/docs
+          cp -r overrides/. build/overrides/
+          cp -r docs/. build/docs/
+          mkdocs build -f mkdocs.yml
+
+      - name: Build other languages
+        run: |
+          for lang in zh-hant en ja ru vi; do
+            mkdir -p "build/$lang/docs"
+            cp -r "$lang/docs/." "build/$lang/docs/"
+            mkdocs build -f "$lang/mkdocs.yml"
+          done
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
