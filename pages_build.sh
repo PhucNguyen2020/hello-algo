@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+export PYTHONUTF8=1
+export PYTHONIOENCODING=utf-8
+
 pip install --quiet mkdocs-material==9.5.5 mkdocs-glightbox
 
 mkdir -p build/overrides build/docs
